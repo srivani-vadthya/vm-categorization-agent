@@ -1,29 +1,38 @@
+from services.agent_capability_service import (
+    select_agent
+)
+
+from utils.logger_config import (
+    get_logger
+)
+
+logger = get_logger(__name__)
+
+
 def determine_route(
+
         support_level,
-        technology):
 
-    if support_level == "L1":
+        technology
 
-        return "l1_support_agent"
+):
 
-    if support_level == "L2":
+    logger.info(
+        "Determining routing."
+    )
 
-        if technology == "Guidewire":
+    agent = select_agent(
 
-            return "l2_guidewire_agent"
+        support_level,
 
-        if technology == "Infrastructure":
+        technology
 
-            return "l2_infrastructure_agent"
+    )
 
-        if technology == "Database":
+    logger.info(
 
-            return "l2_database_agent"
+        f"Selected Agent : {agent['selected_agent']}"
 
-        return "l2_application_agent"
+    )
 
-    if support_level == "L3":
-
-        return "l3_development_agent"
-
-    return "reject"
+    return agent

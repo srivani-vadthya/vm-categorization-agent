@@ -1,5 +1,6 @@
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class CategorizationResult(BaseModel):
@@ -10,14 +11,38 @@ class CategorizationResult(BaseModel):
 
     support_level: str
 
-    team: Optional[str] = None
+    technology: str
 
-    technology: Optional[str] = None
+    team: str
 
-    route_to: Optional[str] = None
+    priority: str
+
+    business_impact: str
+
+    business_criticality: str
+
+    risk: str
+
+    risk_score: int
+
+    duplicate: bool
+
+    duplicate_of: Optional[str]
 
     confidence: float
 
+    requires_human: bool
+
+    selected_agent: str
+
+    backup_agent: Optional[str]
+
+    available: bool
+
     reject: bool
 
+    route_to: str
+
     reason: str
+
+    reasoning: List[str]

@@ -8,26 +8,50 @@ L1_KEYWORDS = [
 
     "login",
 
-    "access denied",
-
-    "user issue",
-
     "password",
 
     "authentication",
 
-    "single user"
+    "access denied",
+
+    "single user",
+
+    "email issue",
+
+    "outlook"
 ]
 
 
-def is_l1(text):
+def match(payload):
 
-    text = text.lower()
+    score = 0
+
+    matched = []
+
+    text = (
+
+        payload.get(
+            "title",
+            ""
+        )
+
+        +
+
+        payload.get(
+            "description",
+            ""
+        )
+
+    ).lower()
 
     for keyword in L1_KEYWORDS:
 
         if keyword in text:
 
-            return True
+            score += 1
 
-    return False
+            matched.append(
+                keyword
+            )
+
+    return score, matched

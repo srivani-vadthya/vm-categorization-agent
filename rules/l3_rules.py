@@ -8,32 +8,54 @@ L3_KEYWORDS = [
 
     "segmentation fault",
 
-    "code defect",
-
-    "deployment bug",
-
-    "regression",
-
-    "compile",
-
     "java",
 
     "python",
 
     "traceback",
 
-    "syntax error"
+    "syntax",
+
+    "deployment bug",
+
+    "regression",
+
+    "code defect",
+
+    "compilation"
 ]
 
 
-def is_l3(text):
+def match(payload):
 
-    text = text.lower()
+    score = 0
+
+    matched = []
+
+    text = (
+
+        payload.get(
+            "title",
+            ""
+        )
+
+        +
+
+        payload.get(
+            "description",
+            ""
+        )
+
+    ).lower()
 
     for keyword in L3_KEYWORDS:
 
         if keyword in text:
 
-            return True
+            score += 1
 
-    return False
+            matched.append(
+                keyword
+            )
+
+    return score, matched

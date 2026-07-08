@@ -1,33 +1,76 @@
-def detect_technology(text):
+TECHNOLOGIES = {
 
-    text = text.lower()
+    "guidewire": "Guidewire",
 
-    if "policycenter" in text:
+    "policycenter": "Guidewire",
 
-        return "Guidewire"
+    "claimcenter": "Guidewire",
 
-    if "claimcenter" in text:
+    "billingcenter": "Guidewire",
 
-        return "Guidewire"
+    "oracle": "Database",
 
-    if "servicenow" in text:
+    "postgres": "Database",
 
-        return "ServiceNow"
+    "mysql": "Database",
 
-    if "kubernetes" in text:
+    "cpu": "Infrastructure",
 
-        return "Kubernetes"
+    "memory": "Infrastructure",
 
-    if "database" in text:
+    "server": "Infrastructure",
 
-        return "Database"
+    "kubernetes": "Platform",
 
-    if "api" in text:
+    "docker": "Platform",
 
-        return "Application"
+    "aws": "Cloud",
 
-    if "cpu" in text:
+    "azure": "Cloud",
 
-        return "Infrastructure"
+    "gcp": "Cloud",
 
-    return "General"
+    "java": "Application",
+
+    "python": "Application",
+
+    "servicenow": "ServiceNow"
+}
+
+
+def detect(payload):
+
+    text = (
+
+        payload.get(
+            "title",
+            ""
+        )
+
+        +
+
+        payload.get(
+            "description",
+            ""
+        )
+
+    ).lower()
+
+    matched = []
+
+    for keyword in TECHNOLOGIES:
+
+        if keyword in text:
+
+            matched.append(
+
+                TECHNOLOGIES[
+                    keyword
+                ]
+            )
+
+    if matched:
+
+        return matched[0], matched
+
+    return "General", []

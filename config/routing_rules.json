@@ -1,0 +1,46 @@
+{
+    "L1": {
+        "default": "l1_support_agent"
+    },
+
+    "L2": {
+
+        "Infrastructure": "l2_infrastructure_agent",
+
+        "Database": "l2_database_agent",
+
+        "Guidewire": "l2_guidewire_agent",
+
+        "Cloud": "l2_cloud_agent",
+
+        "Platform": "l2_platform_agent",
+
+        "Application": "l2_application_agent",
+
+        "ServiceNow": "l2_servicenow_agent",
+
+        "General": "l2_application_agent"
+    },
+
+    "L3": {
+
+        "Application": "l3_application_agent",
+
+        "Guidewire": "l3_guidewire_agent",
+
+        "Database": "l3_database_agent",
+
+        "Infrastructure": "l3_infrastructure_agent",
+
+        "Cloud": "l3_cloud_agent",
+
+        "Platform": "l3_platform_agent",
+
+        "General": "l3_development_agent"
+    },
+
+    "REJECT": {
+
+        "default": "reject_agent"
+    }
+}

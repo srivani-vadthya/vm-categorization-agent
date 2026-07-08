@@ -4,44 +4,64 @@ L2_KEYWORDS = [
 
     "memory",
 
+    "disk",
+
     "database",
-
-    "timeout",
-
-    "application",
 
     "server",
 
-    "kubernetes",
-
-    "pod",
-
-    "cluster",
-
     "api",
-
-    "gateway",
-
-    "service unavailable",
-
-    "disk",
-
-    "job failed",
 
     "latency",
 
-    "performance"
+    "performance",
+
+    "pod",
+
+    "kubernetes",
+
+    "timeout",
+
+    "connection refused",
+
+    "gateway",
+
+    "job failed",
+
+    "application"
 ]
 
 
-def is_l2(text):
+def match(payload):
 
-    text = text.lower()
+    score = 0
+
+    matched = []
+
+    text = (
+
+        payload.get(
+            "title",
+            ""
+        )
+
+        +
+
+        payload.get(
+            "description",
+            ""
+        )
+
+    ).lower()
 
     for keyword in L2_KEYWORDS:
 
         if keyword in text:
 
-            return True
+            score += 1
 
-    return False
+            matched.append(
+                keyword
+            )
+
+    return score, matched

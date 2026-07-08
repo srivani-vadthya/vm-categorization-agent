@@ -1,14 +1,21 @@
 import logging
 
 
-logging.basicConfig(
+def get_logger(name: str):
 
-    level=logging.INFO,
+    logging.basicConfig(
 
-    format=
-    "%(asctime)s | %(levelname)s | %(message)s"
-)
+        level=logging.INFO,
 
-logger = logging.getLogger(
-    "categorization-agent"
-)
+        format=(
+            "%(asctime)s | "
+            "%(levelname)s | "
+            "%(name)s | "
+            "%(message)s"
+        )
+
+        
+    )
+    
+
+    return logging.getLogger(name)

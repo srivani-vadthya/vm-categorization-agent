@@ -6,8 +6,9 @@ from api.categorization_api import (
 
 app = FastAPI(
 
-    title=
-        "Categorization Agent"
+    title="Enterprise Categorization Agent",
+
+    version="1.0.0"
 )
 
 
@@ -16,8 +17,21 @@ def home():
 
     return {
 
-        "message":
-            "Categorization Agent Running"
+        "application":
+            "Enterprise Categorization Agent",
+
+        "status":
+            "Running"
+    }
+
+
+@app.get("/health")
+def health():
+
+    return {
+
+        "status":
+            "UP"
     }
 
 
