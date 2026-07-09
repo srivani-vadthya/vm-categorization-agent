@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class CategorizationResult(BaseModel):
 
-    ticket_id: str
+    ticket_id: Optional[str] = None
 
     classification: str
 
@@ -46,3 +46,19 @@ class CategorizationResult(BaseModel):
     reason: str
 
     reasoning: List[str]
+
+    # AMS graph-routing fields. These let the downstream LangGraph route
+    # without translating the legacy response shape.
+    is_valid_incident: bool = True
+
+    category: str = "unknown"
+
+    rca_level: str = "human_review"
+
+    needs_human_review: bool = False
+
+    recommended_next_action: str = "human_review"
+
+    source_event_id: Optional[str] = None
+
+    normalised_event_id: Optional[str] = None
