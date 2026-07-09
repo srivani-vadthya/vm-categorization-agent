@@ -85,11 +85,230 @@ from services.decision_merger import (
 logger = get_logger(__name__)
 
 
+def _first_text(*values):
+
+    for value in values:
+
+        if value is not None and str(value).strip():
+
+            return str(value).strip()
+
+    return ""
+
+
+def _normalise_priority(priority):
+
+    mapping = {
+
+        "1": "P1",
+
+        "2": "P2",
+
+        "3": "P3",
+
+        "4": "P4",
+
+        "5": "P5",
+
+        "p1": "P1",
+
+        "p2": "P2",
+
+        "p3": "P3",
+
+        "p4": "P4",
+
+        "p5": "P5"
+    }
+
+    value = str(priority or "").strip()
+
+    return mapping.get(value.lower(), value)
+
+
+def _join_text(*values):
+
+    parts = []
+
+    for value in values:
+
+        if isinstance(value, list):
+
+            text = " ".join(str(item) for item in value if item)
+
+        else:
+
+            text = str(value or "")
+
+        if text.strip():
+
+            parts.append(text.strip())
+
+    return "\n".join(parts)
+
+
+def adapt_normalized_event(payload):
+
+    """
+    Accept both the old ticket payload and the AMS normalised ErrorEvent.
+
+    Existing rules operate on ticket_id/title/description. This adapter fills
+    those fields from incident_id, short_description, message, traceback and
+    other normalised fields while preserving the original event.
+    """
+
+    adapted = dict(payload)
+
+    ticket_id = _first_text(
+
+        adapted.get("ticket_id"),
+
+        adapted.get("incident_id"),
+
+        adapted.get("external_id"),
+
+        adapted.get("source_event_id"),
+
+        adapted.get("id")
+    )
+
+    title = _first_text(
+
+        adapted.get("title"),
+
+        adapted.get("short_description"),
+
+        adapted.get("message"),
+
+        adapted.get("error_type")
+    )
+
+    labels = adapted.get("labels") or []
+
+    components = adapted.get("components") or []
+
+    description = _join_text(
+
+        adapted.get("description"),
+
+        adapted.get("raw_description"),
+
+        adapted.get("traceback"),
+
+        adapted.get("message"),
+
+        adapted.get("error_type"),
+
+        adapted.get("file_path"),
+
+        adapted.get("function_name"),
+
+        labels,
+
+        components
+    )
+
+    adapted["ticket_id"] = ticket_id or "unknown"
+
+    adapted["title"] = title
+
+    adapted["description"] = description
+
+    adapted["priority"] = _normalise_priority(adapted.get("priority"))
+
+    adapted["environment"] = _first_text(
+
+        adapted.get("environment"),
+
+        adapted.get("impacted_environment"),
+
+        "production"
+    )
+
+    adapted["business_service"] = _first_text(
+
+        adapted.get("business_service"),
+
+        adapted.get("configuration_item"),
+
+        adapted.get("assignment_group"),
+
+        adapted.get("repo_full_name")
+    )
+
+    adapted["normalised_event_id"] = adapted.get("id")
+
+    adapted["raw_normalised_event"] = payload
+
+    return adapted
+
+
+def _category_for(support, technology, payload):
+
+    if support == "L3":
+
+        return "code"
+
+    if support == "L2":
+
+        return technology.lower() if technology else "operations"
+
+    if support == "L1":
+
+        return "support"
+
+    if support == "NONE":
+
+        return "rejected"
+
+    return payload.get("issue_category") or "unknown"
+
+
+def _recommended_action(support, reject, requires_human):
+
+    if reject:
+
+        return "reject"
+
+    if requires_human:
+
+        return "human_review"
+
+    mapping = {
+
+        "L1": "run_l1_rca",
+
+        "L2": "run_l2_rca",
+
+        "L3": "run_l3_rca"
+    }
+
+    return mapping.get(support, "human_review")
+
+
+def _has_code_evidence(payload):
+
+    return bool(
+
+        payload.get("traceback")
+
+        or payload.get("file_path")
+
+        or payload.get("function_name")
+
+        or payload.get("line_number")
+
+        or payload.get("is_code_issue") is True
+    )
+
+
 def categorize(payload):
 
     logger.info("=" * 60)
     logger.info("CATEGORIZATION STARTED")
     logger.info("=" * 60)
+
+    payload = adapt_normalized_event(payload)
 
     # ======================================================
     # Validation
@@ -143,7 +362,21 @@ def categorize(payload):
 
         reason=validation["reason"],
 
-        reasoning=validation["reasoning"]
+        reasoning=validation["reasoning"],
+
+        is_valid_incident=False,
+
+        category="rejected",
+
+        rca_level="reject",
+
+        needs_human_review=False,
+
+        recommended_next_action="reject",
+
+        source_event_id=payload.get("source_event_id"),
+
+        normalised_event_id=payload.get("normalised_event_id")
     )
 
     # ======================================================
@@ -161,6 +394,16 @@ def categorize(payload):
     l3_score, l3_rules = l3_match(
         payload
     )
+
+    if _has_code_evidence(payload):
+
+        l3_score += 3
+
+        l3_rules = list(l3_rules)
+
+        l3_rules.append(
+            "normalised code evidence"
+        )
 
     if l1_score >= l2_score and l1_score >= l3_score:
 
@@ -376,7 +619,21 @@ def categorize(payload):
 
                 reasoning=[
                     "Rejected by AI Validator."
-                ]
+                ],
+
+                is_valid_incident=False,
+
+                category="rejected",
+
+                rca_level="reject",
+
+                needs_human_review=False,
+
+                recommended_next_action="reject",
+
+                source_event_id=payload.get("source_event_id"),
+
+                normalised_event_id=payload.get("normalised_event_id")
             )
 
         logger.info("AI confirmed valid incident.")
@@ -498,6 +755,17 @@ def categorize(payload):
     logger.info("CATEGORIZATION COMPLETED")
     logger.info("=" * 60)
 
+    recommended_next_action = _recommended_action(
+
+        support,
+
+        False,
+
+        review[
+            "requires_review"
+        ]
+    )
+
     return CategorizationResult(
 
         ticket_id=payload.get(
@@ -554,5 +822,28 @@ def categorize(payload):
 
         reason="Incident Categorized",
 
-        reasoning=reasoning
+        reasoning=reasoning,
+
+        is_valid_incident=True,
+
+        category=_category_for(
+
+            support,
+
+            technology,
+
+            payload
+        ),
+
+        rca_level=support,
+
+        needs_human_review=review[
+            "requires_review"
+        ],
+
+        recommended_next_action=recommended_next_action,
+
+        source_event_id=payload.get("source_event_id"),
+
+        normalised_event_id=payload.get("normalised_event_id")
     )
