@@ -1,6 +1,6 @@
-fastapi==0.111.0
+fastapi==0.115.0
 uvicorn==0.30.1
-pydantic==2.7.1
+pydantic==2.10.6
 groq
 python-dotenv
 requests
